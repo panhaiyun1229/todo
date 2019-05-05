@@ -1,0 +1,208 @@
+<html>
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title></title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="googlebot" content="noindex, nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" type="text/css" href="./css/result-light.css">
+
+  <link rel="stylesheet" type="text/css" href="./css/index.css">
+
+  <style id="compiled-css" type="text/css">
+    /* 结合v-cloak */
+    [v-cloak] {
+      display: none;
+    }
+  </style>
+
+
+
+
+</head>
+
+<body>
+  <section class="todoapp">
+    <header class="header">
+      <h1>任务清单</h1>
+      <input v-model.trim='inputvalue' @keyup.enter='todoAdd' autofocus="autofocus" autocomplete="off"
+        placeholder="你要干啥？" class="new-todo">
+    </header>
+
+    <section class="main"><input type="checkbox" class="toggle-all" v-model='isCheckAll'>
+      <ul class="todo-list">
+        <li class="todo" :class='{completed:it.completed,editing:it==edititem}' v-for='(it,index) in currentlistTodo'
+          @dblclick='enteredit(it)'>
+          <div class="view">
+            <input type="checkbox" v-model='it.completed' class="toggle">
+            <label>{{it.msg}}</label>
+            <button class="destroy" @click='delone(index)'></button></div>
+          <input type="text" class="edit" v-model='it.msg' v-focus @blur='saveEdit' @keyup.enter='saveEdit'>
+        </li>
+        <h2>下面是模板</h2>
+        <li class="todo">
+          <div class="view">
+            <input type="checkbox" class="toggle">
+            <label>吃饭睡觉123</label>
+            <button class="destroy"></button></div>
+          <input type="text" class="edit">
+        </li>
+        <li class="todo completed">
+          <div class="view"><input type="checkbox" class="toggle"> <label>睡觉觉</label> <button class="destroy"></button>
+          </div>
+          <input type="text" class="edit">
+        </li>
+        <li class="todo editing">
+          <div class="view"><input type="checkbox" class="toggle"> <label>睡觉觉</label> <button class="destroy"></button>
+          </div>
+          <input type="text" class="edit">
+        </li>
+      </ul>
+    </section>
+    <footer class="footer"><span class="todo-count"><strong>{{nocompleteNum}}</strong> item{{nocompleteNum!=1?'s':''}}
+        left
+      </span>
+      <ul class="filters">
+        <li><a href="#/all" @click="currentTodo='All'" :class="{selected:currentTodo=='All'}">All</a></li>
+        <li><a href="#/active" @click="currentTodo='Active'" :class="{selected:currentTodo=='Active'}">Active</a></li>
+        <li><a href="#/completed" @click="currentTodo='Completed'"
+            :class="{selected:currentTodo=='Completed'}">Completed</a></li>
+      </ul> <button class="clear-completed" style="display: none;">
+        Clear completed
+      </button>
+    </footer>
+  </section>
+  <footer class="info">
+    <p>双击进入编辑</p>
+    <p>感谢 <a href="http://evanyou.me">Evan You</a></p>
+    <p><a href="http://todomvc.com">TodoMVC的一部分</a></p>
+  </footer>
+
+
+</body>
+
+</html>
+<!-- 开发环境版本，包含了有帮助的命令行警告 -->
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+
+  // 注册一个全局自定义指令 `v-focus`
+  Vue.directive('focus', {
+    // 当被绑定的元素插入到 DOM 中时……
+    update: function (el) {
+      // 聚焦元素
+      el.focus()
+    }
+  })
+  let app = new Vue({
+    el: '.todoapp',
+    data: {
+      inputvalue: '',
+      todoList: JSON.parse(window.localStorage.getItem('todo')) || [],
+      edititem: undefined,
+      currentTodo: 'Active'
+    },
+    methods: {
+      todoAdd() {
+        if (this.inputvalue === '') {
+          alert('写点东西呗')
+          return
+        }
+        this.todoList.push({
+          msg: this.inputvalue,
+          completed: false
+        })
+        this.inputvalue = ''
+      },
+      delone(index) {
+        if (window.confirm('你确定要删除吗?')) {
+          this.todoList.splice(index, 1)
+        }
+      },
+      // checkone(it){
+      //   it.completed=!it.completed
+      // }
+      enteredit(it) {
+        this.edititem = it
+      },
+      saveEdit() {
+        this.edititem = null
+      }
+    },
+    computed: {
+
+      currentlistTodo() {
+        let temArr = [];
+        switch (this.currentTodo) {
+          case 'All':
+            return this.todoList;
+            break;
+          case 'Active':
+            temArr = [];
+            this.todoList.forEach(v => {
+              if (v.completed == false) {
+                temArr.push(v)
+              }
+            })
+            return temArr;
+            break;
+          case 'Completed':
+            temArr = [];
+            this.todoList.forEach(v => {
+              if (v.completed == true) {
+                temArr.push(v)
+              }
+            })
+            return temArr;
+
+
+        }
+      },
+      nocompleteNum() {
+        let num = 0;
+        this.todoList.forEach(v => {
+          if (v.completed == false) {
+            num++
+          }
+        })
+        return num
+      },
+      //顶部全选
+      isCheckAll: {
+        //取决是不是每一个都被选中
+        get() {
+          let totalNum = this.todoList.length;
+          let checkNum = 0
+          this.todoList.forEach(v => {
+            if (v.completed == true) {
+              checkNum++
+            }
+          })
+          return checkNum == totalNum
+
+        },
+        set(value) {
+          this.todoList.forEach(v => {
+            v.completed = value
+          })
+        }
+
+
+        // let totalNum = this.todoList.length;
+        // let checkNum = 0
+        // this.todoList.forEach(v=>{
+        //   if(v.completed==true){
+        //     checkNum++
+        //   }
+        // })
+        // return checkNum==totalNum
+      }
+    },
+  })
+  window.onbeforeunload = function () {
+    window.localStorage.setItem('todo', JSON.stringify(app.todoList))
+  }
+</script>
